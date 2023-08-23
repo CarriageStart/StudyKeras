@@ -1,0 +1,35 @@
+import numpy as np
+import pandas as pd
+from scipy import stats
+
+
+data = [
+    23, 23, 24, 27, 29, 31, 32, 33, 33, 35,
+    36, 37, 40, 42, 43, 43, 44 ,45, 48, 48,
+    54, 54, 56, 57, 57, 58, 58, 58, 58, 59,
+    61, 61, 62, 63, 64, 65, 66, 68, 68, 70,
+    73, 73, 74, 75, 77, 81, 87, 89, 93, 97
+]
+
+def main() :
+    global data, numBins
+    bins = calculateBins(data)
+    result = countData(data, bins)
+
+
+def calculateBins(data):
+    max_numBins = len(data)
+    min_data, max_data = min(data), max(data)
+    min_binWidth = 1
+
+    binWidth = min_binWidth
+    min_count = 0
+    while min_count < 5 :
+        bins = np.arange(min_data, max_data, step=binWidth)
+
+
+
+
+
+if __name__ == "__main__" :
+    main()
