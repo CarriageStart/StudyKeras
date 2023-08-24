@@ -7,6 +7,8 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import missingno as msno
 
+import PySimpleGUI as sg
+
 
 file_paths = [
         "../data/titanic/train.csv",
@@ -51,10 +53,34 @@ def preprocess() -> (pd.DataFrame, pd.DataFrame) :
     print(test_ds.isnull().sum())
     return train_ds, test_ds
 
+
 def main() -> None :
     train_ds, test_ds = preprocess()
     train_ds.info()
+    train_stats = show_stats(train_ds)
+    sg.Print(train_stats.to_string()print)
 
+
+def show_stats(table: pd.DataFrame) -> pd.DataFrame :
+    skew = []
+    kurtosis = []
+    null = []
+    median = []
+
+    for val in table.columns :
+        if table[val].dtype.str == "|O" : continue
+        median.append(table[val].median())
+        skew.append(table[val].skew())
+        null.append(table[val].isnull().sum())
+        kurtosis.append(table[val].kurtosis())
+
+    table_stats = table.describe().T
+    table_stats["skew"] = skew
+    table_stats["kurtosis"] = kurtosis
+    table_stats["median"] = median
+    table_stats["null"] = null
+
+    return table_stats
 
 if __name__ == "__main__" :
     main()
