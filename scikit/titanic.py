@@ -58,8 +58,13 @@ def main() -> None :
     train_ds, test_ds = preprocess()
     train_ds.info()
     train_stats = show_stats(train_ds)
-    sg.Print(train_stats.to_string()print)
+    print(train_stats.to_string())
+    sg.Print(train_stats.to_string())
+    loop_trap()
 
+def loop_trap() -> None :
+    while (input("Please, press 'q' to quit : ") == 'q\n') :
+        continue
 
 def show_stats(table: pd.DataFrame) -> pd.DataFrame :
     skew = []
