@@ -51,16 +51,75 @@ def preprocess() -> (pd.DataFrame, pd.DataFrame) :
     print("After dropping Nan")
     print(train_ds.isnull().sum())
     print(test_ds.isnull().sum())
+
+    print("Make the data balanced in classifcation")
+    total = np.sum(train_ds["Survived"].value_counts())
+    print("Survived takes ", round(train_ds["Survived"].value_counts()[0] / total * 100, 2), "%")
+    print("NonSurvived takes ", round(train_ds["Survived"].value_counts()[1] / total * 100, 2), "%")
+    print("It is balanced.")
+
     return train_ds, test_ds
 
+def encode_data(ds) -> pd.DataFrame :
+    # Name
+    arr_title = []
+    for name in ds["Name"].values :
+        # Name is format with "last, mid. first"
+        title = name.split(",")[1].split(".")[0].replace(" ", "")
+        arr_title.append(title)
+
+    arr_title = arr_title.replace("Mlle", "Miss")
+    arr_title = arr_title.replace("Mme", "Mrs")
+    arr_title = arr_title.replace("Ms", "Miss")
+    arr_title = arr_title.replace(
+        [x for x in arr_title 
+            if x not in ["Mr", "Miss", "Mrs", "Masters"]],
+        "Others"
+    )
+    ds["Title"] = arr_title
+    
+    # Sex
+    enc = LabelEncoder()
+    enc.fit(ds["Sex"])
+    ds["Sex"] = enc.transform(ds["Sex"])
+    print("Sex Encoding : ", enc.classes_)
+    
+    # Embarked
+    enc = LabelEncoder()
+    ds["Embarked"] = enc.fit_transform(ds["Embarked"])
+    return ds
+        
 
 def main() -> None :
     train_ds, test_ds = preprocess()
     train_ds.info()
     train_stats = show_stats(train_ds)
     print(train_stats.to_string())
-    sg.Print(train_stats.to_string())
-    loop_trap()
+    #sg.Print(train_stats.to_string())
+
+    print(train_ds[["Pclass", "Survived"]].groupby(
+        ["Pclass"], as_index=True).mean().sort_values(by="Survived", ascending=False).to_string()
+    )
+    print(train_ds[["Sex", "Survived"]].groupby(
+        ["Sex"], as_index=True).mean().sort_values(by="Survived", ascending=False).to_string()
+    )
+    print(train_ds[["SibSp", "Survived"]].groupby(
+        ["SibSp"], as_index=True).mean().sort_values(by="Survived", ascending=False).to_string()
+    )
+    print(train_ds[["Parch", "Survived"]].groupby(
+        ["Parch"], as_index=True).mean().sort_values(by="Survived", ascending=False).to_string()
+    )
+    train_ds["Fare"].hist()
+
+    cat_train_ds = train_ds.select_dtype(includes=["object"])
+    val_train_ds = train_ds.select_dtype(includes=["int64", "float64"])
+    train_ds = encode_data(train_ds)
+    test_ds = encode_data(test_ds)
+
+    encode_data(cat_train_ds)
+    #plt.show()
+
+    #loop_trap()
 
 def loop_trap() -> None :
     while (input("Please, press 'q' to quit : ") == 'q\n') :
