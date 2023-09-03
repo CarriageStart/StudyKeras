@@ -60,6 +60,14 @@ def preprocess() -> (pd.DataFrame, pd.DataFrame) :
 
     return train_ds, test_ds
 
+
+def list_replace(title_list: list, keywords: list, replacement: str) -> list :
+    for i in range(len(title_list)):
+        if title_list[i] in keywords:
+            title_list[i] = replacement
+    return title_list
+
+
 def encode_data(ds) -> pd.DataFrame :
     # Name
     arr_title = []
@@ -68,15 +76,30 @@ def encode_data(ds) -> pd.DataFrame :
         title = name.split(",")[1].split(".")[0].replace(" ", "")
         arr_title.append(title)
 
-    arr_title = arr_title.replace("Mlle", "Miss")
-    arr_title = arr_title.replace("Mme", "Mrs")
-    arr_title = arr_title.replace("Ms", "Miss")
-    arr_title = arr_title.replace(
-        [x for x in arr_title 
-            if x not in ["Mr", "Miss", "Mrs", "Masters"]],
+    #arr_title = arr_title.replace("Mlle", "Miss")
+    #arr_title = arr_title.replace("Mme", "Mrs")
+    #arr_title = arr_title.replace("Ms", "Miss")
+    #arr_title = arr_title.replace(
+    #    [x for x in arr_title 
+    #        if x not in ["Mr", "Miss", "Mrs", "Masters"]],
+    #    "Others"
+    #)
+
+    print("None Exisiting Title : \n",
+        set([x for x in arr_title 
+            if x not in ["Mr", "Miss", "Mrs", "Master"]])
+    )
+    print("Before : \n", arr_title)
+    arr_title = list_replace(arr_title, ["Mlle"], "Miss")
+    arr_title = list_replace(arr_title, ["Mme"], "Mrs")
+    arr_title = list_replace(arr_title, ["Ms"], "Miss")
+    arr_title = list_replace(arr_title,
+        list({x for x in arr_title 
+            if x not in ["Mr", "Miss", "Mrs", "Master"]}),
         "Others"
     )
     ds["Title"] = arr_title
+    print("after : \n", arr_title)
     
     # Sex
     enc = LabelEncoder()
@@ -111,12 +134,13 @@ def main() -> None :
     )
     train_ds["Fare"].hist()
 
-    cat_train_ds = train_ds.select_dtype(includes=["object"])
-    val_train_ds = train_ds.select_dtype(includes=["int64", "float64"])
+    cat_train_ds = train_ds.select_dtypes(include=["object"])
+    val_train_ds = train_ds.select_dtypes(include=["int64", "float64"])
     train_ds = encode_data(train_ds)
     test_ds = encode_data(test_ds)
 
-    encode_data(cat_train_ds)
+    print(train_ds[train_ds["Title"]=="Others"].to_string())
+    #encode_data(cat_train_ds)
     #plt.show()
 
     #loop_trap()
