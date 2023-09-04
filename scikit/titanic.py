@@ -23,7 +23,7 @@ def preprocess() -> (pd.DataFrame, pd.DataFrame) :
     test_ds = pd.read_csv(file_paths[1])
     gender_ds = pd.read_csv(file_paths[2])
 
-    # Order the test_ds like train_ds
+    # Order the columns of test_ds like train_ds
     test_ds["Survived"] = gender_ds["Survived"] # Copy into new Series
     test_ds = test_ds[train_ds.columns]
 
@@ -68,8 +68,10 @@ def list_replace(title_list: list, keywords: list, replacement: str) -> list :
     return title_list
 
 
-def encode_data(ds) -> pd.DataFrame :
-    # Name
+def encode_data(ds: pd.DataFrame) -> pd.DataFrame :
+    # Pclass 
+    ds = pd.concat([ds, pd.get_dummies(ds["Pclass"], prefix="Pclass", dtype="int")], axis=1)
+    # Title
     arr_title = []
     for name in ds["Name"].values :
         # Name is format with "last, mid. first"
@@ -89,7 +91,6 @@ def encode_data(ds) -> pd.DataFrame :
         set([x for x in arr_title 
             if x not in ["Mr", "Miss", "Mrs", "Master"]])
     )
-    print("Before : \n", arr_title)
     arr_title = list_replace(arr_title, ["Mlle"], "Miss")
     arr_title = list_replace(arr_title, ["Mme"], "Mrs")
     arr_title = list_replace(arr_title, ["Ms"], "Miss")
@@ -99,17 +100,19 @@ def encode_data(ds) -> pd.DataFrame :
         "Others"
     )
     ds["Title"] = arr_title
-    print("after : \n", arr_title)
+    ds = pd.concat([ds, pd.get_dummies(ds["Title"], prefix="Title", dtype="int")], axis=1)
     
     # Sex
     enc = LabelEncoder()
     enc.fit(ds["Sex"])
     ds["Sex"] = enc.transform(ds["Sex"])
+    ds = pd.concat([ds, pd.get_dummies(ds["Sex"], prefix="Sex", dtype="int")], axis=1)
     print("Sex Encoding : ", enc.classes_)
     
     # Embarked
     enc = LabelEncoder()
     ds["Embarked"] = enc.fit_transform(ds["Embarked"])
+    ds = pd.concat([ds, pd.get_dummies(ds["Embarked"], prefix="Embarked", dtype="int")], axis=1)
     return ds
         
 
@@ -138,12 +141,18 @@ def main() -> None :
     val_train_ds = train_ds.select_dtypes(include=["int64", "float64"])
     train_ds = encode_data(train_ds)
     test_ds = encode_data(test_ds)
+    print(train_ds.head().to_string())
 
-    print(train_ds[train_ds["Title"]=="Others"].to_string())
-    #encode_data(cat_train_ds)
+    # Show Heatmap
+    corr_matrix = train_ds.corr(numeric_only=True)
+    cmap = sns.diverging_palette(240, 10, n=9, as_cmap=True)
+    plt.figure(figsize=(20, 16))
+    sns.heatmap(
+        corr_matrix, annot=True, cmap= cmap, linewidths=.5, fmt=".2f", annot_kws={"size":10}
+    )
     #plt.show()
+    print(corr_matrix.sort_values(by="Survived", ascending=False)["Survived"].to_string())
 
-    #loop_trap()
 
 def loop_trap() -> None :
     while (input("Please, press 'q' to quit : ") == 'q\n') :
